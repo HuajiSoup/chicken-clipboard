@@ -5,7 +5,7 @@ It's a light-weight clipboard.
 ## Based on?
 
 - Tauri
-- Frontend: Typescript
+- Frontend: React (Typescript)
 - Backend: Rust
 
 ## Usage

@@ -1,0 +1,16 @@
+* {
+  margin: 0px;
+}
+
+body {
+  background: #fcf69d;
+  overflow: hidden;
+}
+
+main.container {
+  width: 100%;
+  height: 100vh;
+  font-family: sans-serif;
+  display: flex;
+  flex-direction: column;
+}

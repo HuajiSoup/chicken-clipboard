@@ -13,8 +13,8 @@
     "windows": [
       {
         "title": "chicken-clipboard",
-        "width": 800,
-        "height": 600
+        "width": 360,
+        "height": 360
       }
     ],
     "security": {
