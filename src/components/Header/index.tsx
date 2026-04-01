@@ -1,4 +1,5 @@
 import { Settings, X } from "lucide-react";
+
 import "./index.scss";
 
 const Header: React.FC = () => {

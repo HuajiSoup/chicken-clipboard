@@ -4,11 +4,16 @@
   flex-grow: 1;
   padding: 10px 10px 0 10px;
   overflow-y: auto;
-  
+
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
   .cliplist {
     box-sizing: border-box;
     width: 100%;
     max-height: calc(100vh - 40px);
-    flex-grow: 1;
+    flex-grow: 1;  
   }
 }

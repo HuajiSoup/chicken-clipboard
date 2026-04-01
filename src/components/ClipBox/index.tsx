@@ -1,18 +1,13 @@
 import { Trash2Icon } from "lucide-react";
+import Clip from "../../models/clip";
 import "./index.scss";
-
-type Clip = {
-  id: number;
-  content: string;
-  timeEdited: number;
-}
 
 const ClipBox: React.FC<{ clip: Clip }> = ({ clip }) => {
   return (<>
     <div className="clipbox" data-clip-id={clip.id}>
       <div className="content">
         <p>{clip.content}</p>
-        <small>{new Date(clip.timeEdited).toLocaleString()}</small>
+        <small>{new Date(clip.edit).toLocaleString()}</small>
       </div>
       <div className="options">
         <div className="option delete">
@@ -24,4 +19,3 @@ const ClipBox: React.FC<{ clip: Clip }> = ({ clip }) => {
 }
 
 export default ClipBox;
-export type { Clip };

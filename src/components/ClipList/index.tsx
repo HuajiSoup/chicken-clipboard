@@ -1,27 +1,27 @@
-import { useMemo } from "react";
-import ClipBox, { Clip } from "../ClipBox";
+import { useEffect, useMemo, useState } from "react";
+import ClipBox from "../ClipBox";
+import Clip from "../../models/clip";
+import { getClips, initDatabase } from "../../utils/dbop";
 
 import "./index.scss";
 
-const testclips: Clip[] = [
-  {
-    id: 1,
-    content: "Hello, World! Long text test!\
-      Long text test!Long text test!\
-      Long text test!Long text test!Long text test!Long text test!",
-    timeEdited: 1085000000000,
-  },
-  {
-    id: 2,
-    content: "This is a test clip.",
-    timeEdited: 1684444000000,
-  }
-];
-
 const ClipList: React.FC = () => {
-  const clipById = useMemo(() => {
-    return new Map<number, Clip>(testclips.map((clip) => [clip.id, clip]));
+  const [clips, setClips] = useState<Clip[]>([]);
+  
+  const init = async () => await initDatabase();
+  const fetchClips = async () => setClips(await getClips());
+
+  useEffect(() => {
+    const initAndFetch = async () => {
+      await init();
+      await fetchClips();
+    }
+    initAndFetch();
   }, []);
+
+  const clipById = useMemo(() => {
+    return new Map<number, number>(clips.map((clip, index) => [clip.id, index]));
+  }, [clips]);
 
   const handleClickClip = (e: React.MouseEvent<HTMLDivElement>) => {
     const clicked = (e.target as HTMLElement).closest(".clipbox") as HTMLElement | null;
@@ -30,16 +30,16 @@ const ClipList: React.FC = () => {
     const clipId = Number(clicked.dataset.clipId);
     if (Number.isNaN(clipId)) return;
 
-    const selectedClip = clipById.get(clipId);
-    if (!selectedClip) return;
+    const selectedClipIndex = clipById.get(clipId);
+    if (typeof selectedClipIndex !== "number") return;
 
-    console.log("Clicked clip:", selectedClip);
+    console.log("Clicked clip:", clips[selectedClipIndex]);
   }
 
   return (<>
-    <div className="cliplist-wrapper">
+    <div className="cliplist-wrapper" onClick={fetchClips}>
       <div className="cliplist" onClick={handleClickClip}>
-        {testclips.map((clip) => (
+        {clips.map((clip) => (
           <ClipBox key={clip.id} clip={clip} />
         ))}
       </div>
