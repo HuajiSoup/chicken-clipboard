@@ -21,6 +21,13 @@
       "csp": null
     }
   },
+  "plugins": {
+    "sql": {
+      "preload": [
+        "sqlite:E:/HuajiSoup/huajiLAB/messy/db/clips.db"
+      ]
+    }
+  },
   "bundle": {
     "active": true,
     "targets": "all",

@@ -1,19 +1,27 @@
 import { useEffect, useMemo, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
+
 import ClipBox from "../ClipBox";
 import Clip from "../../models/clip";
-import { getClips, initDatabase } from "../../utils/dbop";
+import Tester from "../Tester";
 
 import "./index.scss";
+
 
 const ClipList: React.FC = () => {
   const [clips, setClips] = useState<Clip[]>([]);
   
-  const init = async () => await initDatabase();
-  const fetchClips = async () => setClips(await getClips());
+  const fetchClips = async () => {
+    try {
+      const fetchedClips = await invoke("get_all_clips") as Clip[];
+      setClips(fetchedClips);
+    } catch (error) {
+      console.error("Error fetching clips:", error);
+    }
+  };
 
   useEffect(() => {
     const initAndFetch = async () => {
-      await init();
       await fetchClips();
     }
     initAndFetch();
@@ -38,6 +46,7 @@ const ClipList: React.FC = () => {
 
   return (<>
     <div className="cliplist-wrapper" onClick={fetchClips}>
+      <Tester />
       <div className="cliplist" onClick={handleClickClip}>
         {clips.map((clip) => (
           <ClipBox key={clip.id} clip={clip} />

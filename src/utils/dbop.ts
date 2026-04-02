@@ -10,7 +10,7 @@ export async function initDatabase() {
       id          INTEGER PRIMARY KEY AUTOINCREMENT,
       content     TEXT NOT NULL,
       hash        TEXT UNIQUE NOT NULL,
-      edit        INTEGER DEFAULT (DATETIME('now', 'localtime'))
+      edit        DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `);
 }
@@ -18,14 +18,4 @@ export async function initDatabase() {
 export async function getClips() {
   const clips = await db.select("SELECT * FROM clips ORDER BY edit DESC");
   return (clips as Clip[]);
-}
-
-export async function updateClipTest() {
-  const content = String(Date.now());
-  const hash = String(Math.random());
-  const edit = Date.now();
-  await db.execute(
-    "INSERT INTO clips (content, hash, edit) VALUES ($1, $2, $3) ON CONFLICT(hash) DO UPDATE SET content=excluded.content, edit=excluded.edit",
-    [content, hash, edit]
-  );
 }

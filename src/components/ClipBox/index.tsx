@@ -7,7 +7,7 @@ const ClipBox: React.FC<{ clip: Clip }> = ({ clip }) => {
     <div className="clipbox" data-clip-id={clip.id}>
       <div className="content">
         <p>{clip.content}</p>
-        <small>{new Date(clip.edit).toLocaleString()}</small>
+        <small>{clip.edit}</small>
       </div>
       <div className="options">
         <div className="option delete">
