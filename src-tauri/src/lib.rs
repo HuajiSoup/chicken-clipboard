@@ -1,4 +1,5 @@
 mod db;
+mod listener;
 
 #[tauri::command]
 async fn init_db(app: tauri::AppHandle) -> Result<(), String> {
@@ -54,6 +55,10 @@ pub fn run() {
         )
         .setup(|app| {
             tauri::async_runtime::block_on(db::init_db(&app.handle().clone()))?;
+            Ok(())
+        })
+        .setup(|app| {
+            listener::start_clipboard_listener(&app.handle().clone());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

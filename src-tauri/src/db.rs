@@ -26,8 +26,7 @@ async fn sqlite_pool<R: Runtime>(handle: &AppHandle<R>) -> Result<Pool<Sqlite>, 
 pub async fn init_db<R: Runtime>(handle: &AppHandle<R>) -> Result<(), String> {
     let db_pool = sqlite_pool(handle).await?;
 
-    sqlx::query(
-        "
+    sqlx::query("
         CREATE TABLE IF NOT EXISTS clips (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             content     TEXT NOT NULL,
@@ -124,7 +123,7 @@ pub async fn update_clip_content<R: Runtime>(
     .map_err(|e| e.to_string())
 }
 
-fn hash_str(content: &str) -> String {
+pub fn hash_str(content: &str) -> String {
     use sha2::{Digest, Sha256};
 
     let mut hasher = Sha256::new();

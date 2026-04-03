@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { List } from "react-window";
 
 import ClipBox from "../ClipBox";
 import Clip from "../../models/clip";
-import Tester from "../Tester";
 
 import "./index.scss";
-
 
 const ClipList: React.FC = () => {
   const [clips, setClips] = useState<Clip[]>([]);
@@ -21,10 +20,7 @@ const ClipList: React.FC = () => {
   };
 
   useEffect(() => {
-    const initAndFetch = async () => {
-      await fetchClips();
-    }
-    initAndFetch();
+    fetchClips();
   }, []);
 
   const clipById = useMemo(() => {
@@ -38,20 +34,23 @@ const ClipList: React.FC = () => {
     const clipId = Number(clicked.dataset.clipId);
     if (Number.isNaN(clipId)) return;
 
-    const selectedClipIndex = clipById.get(clipId);
-    if (typeof selectedClipIndex !== "number") return;
+    const idx = clipById.get(clipId);
+    if (typeof idx !== "number") return;
 
-    console.log("Clicked clip:", clips[selectedClipIndex]);
+    console.log("Clicked clip:", clips[idx]);
   }
 
   return (<>
     <div className="cliplist-wrapper" onClick={fetchClips}>
-      <Tester />
-      <div className="cliplist" onClick={handleClickClip}>
-        {clips.map((clip) => (
-          <ClipBox key={clip.id} clip={clip} />
-        ))}
-      </div>
+      {/* <Tester /> */}
+      <List 
+        className="cliplist"
+        onClick={handleClickClip}
+        rowComponent={ClipBox}
+        rowProps={{ clips }}
+        rowCount={clips.length}
+        rowHeight={65}
+      />
     </div>
   </>);
 }

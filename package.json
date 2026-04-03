@@ -19,6 +19,7 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-hot-toast": "^2.6.0",
+    "react-window": "^2.2.7",
     "sass": "^1.98.0",
     "scss": "^0.2.4"
   },
