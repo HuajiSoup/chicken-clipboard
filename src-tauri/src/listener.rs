@@ -11,7 +11,7 @@ pub fn start_clipboard_listener<R: Runtime>(app_handle: &AppHandle<R>) {
 
         let mut last_hash = String::new();
         loop {
-            tokio::time::sleep(std::time::Duration::from_millis(1500)).await;
+            tokio::time::sleep(std::time::Duration::from_millis(1000)).await;
             if let Ok(cur) = handle.clipboard().read_text() {
                 let cur_hash = db::hash_str(&cur);
                 if cur_hash == last_hash {

@@ -99,6 +99,7 @@ pub async fn save_clip<R: Runtime>(
         edit: saved.edit.clone(),
     };
     let _ = handle.emit("clipboard://save", payload);
+    println!("Emitted clipboard://save event for clip id: {}", saved.id);
 
     Ok(saved)
 }
@@ -131,7 +132,7 @@ pub async fn update_clip<R: Runtime>(
     let new_hash = hash_str(content);
     let updated = sqlx::query_as::<_, ClipRow>("
         UPDATE clips SET content = ?, hash = ?, edit = datetime('now', 'localtime') WHERE id = ? 
-        returning id, content, edit
+        RETURNING id, content, edit
     ")
     .bind(content)
     .bind(new_hash)
