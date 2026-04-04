@@ -12,29 +12,23 @@ async fn get_all_clips(app: tauri::AppHandle) -> Result<Vec<db::ClipRow>, String
 }
 
 #[tauri::command]
-async fn save_clip(content: String, app: tauri::AppHandle) -> Result<u64, String> {
-    db::save_clip(&app, &content)
-        .await
-        .map(|result| result.rows_affected())
+async fn save_clip(content: String, app: tauri::AppHandle) -> Result<db::ClipRow, String> {
+    db::save_clip(&app, &content).await
 }
 
 #[tauri::command]
-async fn delete_clip(id: i64, app: tauri::AppHandle) -> Result<u64, String> {
-    db::delete_clip(&app, id)
-        .await
-        .map(|result| result.rows_affected())
+async fn delete_clip(id: i64, app: tauri::AppHandle) -> Result<i64, String> {
+    db::delete_clip(&app, id).await
+}
+
+#[tauri::command]
+async fn update_clip(id: i64, content: String, app: tauri::AppHandle) -> Result<i64, String> {
+    db::update_clip(&app, id, &content).await
 }
 
 #[tauri::command]
 async fn clear_all_clips(app: tauri::AppHandle) -> Result<u64, String> {
     db::clear_all_clips(&app)
-        .await
-        .map(|result| result.rows_affected())
-}
-
-#[tauri::command]
-async fn update_clip(id: i64, content: String, app: tauri::AppHandle) -> Result<u64, String> {
-    db::update_clip_content(&app, id, &content)
         .await
         .map(|result| result.rows_affected())
 }

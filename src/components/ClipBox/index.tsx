@@ -1,6 +1,6 @@
-import { Trash2Icon } from "lucide-react";
-import Clip from "../../models/clip";
 import { RowComponentProps } from "react-window";
+import Clip from "../../models/clip";
+import { Edit } from "lucide-react";
 
 import "./index.scss";
 
@@ -19,8 +19,8 @@ const ClipBox = ({
           <small>{clip.edit}</small>
         </div>
         <div className="options">
-          <div className="option delete">
-            <Trash2Icon size={20} strokeWidth={1.5} />
+          <div className="option">
+            <Edit size={20} strokeWidth={1.5} />
           </div>
         </div>
       </div>

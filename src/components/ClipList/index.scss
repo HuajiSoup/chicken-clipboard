@@ -1,8 +1,8 @@
 .cliplist-wrapper {
   box-sizing: border-box;
   width: 100%;
-  flex-grow: 1;
-  padding: 0;
+  height: 100vh;
+  padding-top: 40px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -11,8 +11,9 @@
   .cliplist {
     box-sizing: border-box;
     width: 100%;
+    padding: 10px 0;
     max-height: max-content;
-    flex-grow: 1;  
+    flex-grow: 1;
 
     scrollbar-width: none;
     &::-webkit-scrollbar {

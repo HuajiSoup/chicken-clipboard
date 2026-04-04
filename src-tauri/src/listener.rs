@@ -22,8 +22,8 @@ pub fn start_clipboard_listener<R: Runtime>(app_handle: &AppHandle<R>) {
                 let result = db::save_clip(&handle, &cur).await;
 
                 match result {
-                    Ok(_) => {
-                        println!("Saved new clipboard content: {}", cur)
+                    Ok(saved) => {
+                        println!("Saved new clipboard content: {} (id: {}, edit: {})", cur, saved.id, saved.edit)
                     },
                     Err(e) => eprintln!("Failed to save clipboard content: {}", e),
                 }

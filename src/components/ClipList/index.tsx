@@ -1,31 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
 import { List } from "react-window";
+import useClips from "../../utils/useClips";
 
 import ClipBox from "../ClipBox";
-import Clip from "../../models/clip";
 
 import "./index.scss";
 
 const ClipList: React.FC = () => {
-  const [clips, setClips] = useState<Clip[]>([]);
-  
-  const fetchClips = async () => {
-    try {
-      const fetchedClips = await invoke("get_all_clips") as Clip[];
-      setClips(fetchedClips);
-    } catch (error) {
-      console.error("Error fetching clips:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchClips();
-  }, []);
-
-  const clipById = useMemo(() => {
-    return new Map<number, number>(clips.map((clip, index) => [clip.id, index]));
-  }, [clips]);
+  const [clips, idMap] = useClips();
 
   const handleClickClip = (e: React.MouseEvent<HTMLDivElement>) => {
     const clicked = (e.target as HTMLElement).closest(".clipbox") as HTMLElement | null;
@@ -34,14 +15,14 @@ const ClipList: React.FC = () => {
     const clipId = Number(clicked.dataset.clipId);
     if (Number.isNaN(clipId)) return;
 
-    const idx = clipById.get(clipId);
+    const idx = idMap.get(clipId);
     if (typeof idx !== "number") return;
 
     console.log("Clicked clip:", clips[idx]);
   }
 
   return (<>
-    <div className="cliplist-wrapper" onClick={fetchClips}>
+    <div className="cliplist-wrapper">
       {/* <Tester /> */}
       <List 
         className="cliplist"

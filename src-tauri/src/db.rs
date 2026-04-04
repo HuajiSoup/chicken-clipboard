@@ -1,5 +1,5 @@
 use sqlx::{sqlite::SqliteQueryResult, Pool, Sqlite};
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{AppHandle, Emitter, Manager, Runtime};
 use tauri_plugin_sql::{DbInstances, DbPool};
 
 #[derive(Debug, Clone, serde::Serialize, sqlx::FromRow)]
@@ -7,6 +7,25 @@ pub struct ClipRow {
     pub id: u64,
     pub content: String,
     pub edit: String,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct PayloadClipSaved {
+    id: u64,
+    content: String,
+    edit: String,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct PayloadClipDeleted {
+    id: u64,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct PayloadClipUpdated {
+    id: u64,
+    content: String,
+    edit: String,
 }
 
 pub const DB_URL: &str = "sqlite:E:/HuajiSoup/huajiLAB/messy/db/clips.db";
@@ -33,8 +52,7 @@ pub async fn init_db<R: Runtime>(handle: &AppHandle<R>) -> Result<(), String> {
             hash        TEXT UNIQUE NOT NULL,
             edit        TEXT DEFAULT (datetime('now', 'localtime'))
         )
-    ",
-    )
+    ")
     .execute(&db_pool)
     .await
     .map_err(|e| e.to_string())?;
@@ -54,43 +72,82 @@ pub async fn get_all_clips<R: Runtime>(
     .await
     .map_err(|e| e.to_string())?;
 
-    println!("Fetched! Results:");
-    for clip in &rows {
-        println!("ID: {}, Content: {}, Edit: {}", clip.id, clip.content, clip.edit);
-    }
-
     Ok(rows)
 }
 
 pub async fn save_clip<R: Runtime>(
     handle: &AppHandle<R>,
     content: &str,
-) -> Result<SqliteQueryResult, String> {
+) -> Result<ClipRow, String> {
     let db_pool = sqlite_pool(handle).await?;
 
     let hash = hash_str(content);
-    sqlx::query(
-        "INSERT INTO clips (content, hash) VALUES (?, ?) 
-        ON CONFLICT(hash) DO UPDATE SET content = excluded.content, edit = datetime('now', 'localtime')",
-    )
+    let saved = sqlx::query_as::<_, ClipRow>("
+        INSERT INTO clips (content, hash) VALUES (?, ?) 
+        ON CONFLICT(hash) DO UPDATE SET content = excluded.content, edit = datetime('now', 'localtime')
+        RETURNING id, content, edit
+    ")
     .bind(content)
     .bind(hash)
-    .execute(&db_pool)
+    .fetch_one(&db_pool)
     .await
-    .map_err(|e| e.to_string())
+    .map_err(|e| e.to_string())?;
+
+    let payload = PayloadClipSaved {
+        id: saved.id as u64,
+        content: content.to_string(),
+        edit: saved.edit.clone(),
+    };
+    let _ = handle.emit("clipboard://save", payload);
+
+    Ok(saved)
 }
 
 pub async fn delete_clip<R: Runtime>(
     handle: &AppHandle<R>,
     id: i64,
-) -> Result<SqliteQueryResult, String> {
+) -> Result<i64, String> {
     let db_pool = sqlite_pool(handle).await?;
 
     sqlx::query("DELETE FROM clips WHERE id = ?")
         .bind(id)
         .execute(&db_pool)
         .await
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string())?;
+
+    let payload = PayloadClipDeleted { id: id as u64 };
+    let _ = handle.emit("clipboard://delete", payload);
+
+    Ok(id)
+}
+
+pub async fn update_clip<R: Runtime>(
+    handle: &AppHandle<R>,
+    id: i64,
+    content: &str,
+) -> Result<i64, String> {
+    let db_pool = sqlite_pool(handle).await?;
+
+    let new_hash = hash_str(content);
+    let updated = sqlx::query_as::<_, ClipRow>("
+        UPDATE clips SET content = ?, hash = ?, edit = datetime('now', 'localtime') WHERE id = ? 
+        returning id, content, edit
+    ")
+    .bind(content)
+    .bind(new_hash)
+    .bind(id)
+    .fetch_one(&db_pool)
+    .await
+    .map_err(|e| e.to_string())?;
+
+    let payload = PayloadClipUpdated {
+        id: id as u64, 
+        content: content.to_string(),
+        edit: updated.edit.clone(),
+    };
+    let _ = handle.emit("clipboard://update", payload);
+
+    Ok(id)
 }
 
 pub async fn clear_all_clips<R: Runtime>(
@@ -102,25 +159,6 @@ pub async fn clear_all_clips<R: Runtime>(
         .execute(&db_pool)
         .await
         .map_err(|e| e.to_string())
-}
-
-pub async fn update_clip_content<R: Runtime>(
-    handle: &AppHandle<R>,
-    id: i64,
-    content: &str,
-) -> Result<SqliteQueryResult, String> {
-    let db_pool = sqlite_pool(handle).await?;
-
-    let new_hash = hash_str(content);
-    sqlx::query(
-        "UPDATE clips SET content = ?, hash = ?, edit = datetime('now', 'localtime') WHERE id = ?",
-    )
-    .bind(content)
-    .bind(new_hash)
-    .bind(id)
-    .execute(&db_pool)
-    .await
-    .map_err(|e| e.to_string())
 }
 
 pub fn hash_str(content: &str) -> String {
