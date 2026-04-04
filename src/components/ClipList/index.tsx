@@ -33,7 +33,7 @@ const ClipList: React.FC = memo(() => {
     } else {
       // to copy it
       await clipboardWriteText(clips[idx].content);
-      toast.success("Copied!", { duration: 800 });
+      toast.success("Copied!", { duration: 1000 });
     }
   }
 

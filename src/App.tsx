@@ -1,4 +1,4 @@
-import React, { createContext, useState } from "react";
+import { createContext, useState } from "react";
 import Header from "./components/Header";
 import ClipList from "./components/ClipList";
 import ClipEditor from "./components/ClipEditor";
@@ -9,7 +9,7 @@ import { Toaster } from "react-hot-toast";
 
 type EditState = {
   editing: boolean;
-  clip: Clip | null;
+  clip: Clip;
 };
 
 const EditorContext = createContext<(state: EditState) => void>(() => {});
@@ -17,7 +17,11 @@ const EditorContext = createContext<(state: EditState) => void>(() => {});
 function App() {
   const [editState, setEditState] = useState<EditState>({
     editing: false,
-    clip: null,
+    clip: {
+      id: -1,
+      content: "You've found a easter egg placeholder!",
+      edit: "2007-01-30 00:00:00",
+    },
   });
 
   return (<>
