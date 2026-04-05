@@ -14,7 +14,10 @@
       {
         "title": "chicken-clipboard",
         "width": 360,
-        "height": 360
+        "height": 360,
+        "visible": false,
+        "decorations": false,
+        "label": "main"
       }
     ],
     "security": {

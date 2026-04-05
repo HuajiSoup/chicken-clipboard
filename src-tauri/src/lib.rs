@@ -1,15 +1,26 @@
-use std::{sync::Mutex};
+use std::sync::Mutex;
 use tauri::Manager;
 use tauri_plugin_clipboard_manager::ClipboardExt;
 
-use crate::db::hash_str;
-
 mod db;
+mod settings;
 mod listener;
 
 #[derive(Default)]
 pub struct AppState {
     pub internal_copy: String,
+}
+
+#[tauri::command]
+async fn set_window_visibility(visible: bool, app: tauri::AppHandle) -> Result<(), String> {
+    let window = app.get_webview_window("main").ok_or("Window not found")?;
+    if visible {
+        window.show().map_err(|e| e.to_string())?;
+        window.set_focus().map_err(|e| e.to_string())?;
+    } else {
+        window.hide().map_err(|e| e.to_string())?;
+    }
+    Ok(())
 }
 
 #[tauri::command]
@@ -47,9 +58,12 @@ async fn clear_all_clips(app: tauri::AppHandle) -> Result<u64, String> {
 #[tauri::command]
 async fn write_clipboard(content: String, app: tauri::AppHandle) -> Result<(), String> {
     let state = app.state::<Mutex<AppState>>();
-    let mut state = state.lock().unwrap();
-    state.internal_copy = hash_str(&content);
-    println!("Updated internal copy to:{}, hash={}", &content, state.internal_copy);
+    let mut state = state.lock().map_err(|e| e.to_string())?;
+    state.internal_copy = db::hash_str(&content);
+    println!(
+        "Updated internal copy, content={}, hash={}",
+        &content, state.internal_copy
+    );
 
     app.clipboard()
         .write_text(&content)
@@ -59,24 +73,22 @@ async fn write_clipboard(content: String, app: tauri::AppHandle) -> Result<(), S
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_sql::Builder::new().build())
         .plugin(
             tauri_plugin_log::Builder::new()
                 .level(tauri_plugin_log::log::LevelFilter::Info)
                 .build(),
         )
-        .plugin(
-            tauri_plugin_clipboard_manager::init()
-        )
-        .plugin(
-            tauri_plugin_sql::Builder::new().build()
-        )
         .setup(|app| {
             app.manage(Mutex::new(AppState::default()));
             tauri::async_runtime::block_on(db::init_db(&app.handle().clone()))?;
+            settings::start_shortcut_listener(&app.handle().clone())?;
             listener::start_clipboard_listener(&app.handle().clone());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            set_window_visibility,
             init_db,
             get_all_clips,
             save_clip,
