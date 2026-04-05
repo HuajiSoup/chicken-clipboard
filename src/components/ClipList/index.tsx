@@ -3,10 +3,10 @@ import useClips from "../../utils/useClips";
 import ClipBox from "../ClipBox";
 import { memo, useContext } from "react";
 import { EditorContext } from "../../App";
-import { writeText as clipboardWriteText } from "@tauri-apps/plugin-clipboard-manager";
 
 import "./index.scss";
 import toast from "react-hot-toast";
+import { invoke } from "@tauri-apps/api/core";
 
 const ClipList: React.FC = memo(() => {
   const [clips, idMap] = useClips();
@@ -32,8 +32,10 @@ const ClipList: React.FC = memo(() => {
       });
     } else {
       // to copy it
-      await clipboardWriteText(clips[idx].content);
-      toast.success("Copied!", { duration: 1000 });
+      invoke("write_clipboard", { content: clips[idx].content })
+        .then(() => {
+          toast.success("Copied!", { duration: 1000 });
+        });
     }
   }
 

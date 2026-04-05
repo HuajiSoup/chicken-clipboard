@@ -1,5 +1,16 @@
+use std::{sync::Mutex};
+use tauri::Manager;
+use tauri_plugin_clipboard_manager::ClipboardExt;
+
+use crate::db::hash_str;
+
 mod db;
 mod listener;
+
+#[derive(Default)]
+pub struct AppState {
+    pub internal_copy: String,
+}
 
 #[tauri::command]
 async fn init_db(app: tauri::AppHandle) -> Result<(), String> {
@@ -33,6 +44,18 @@ async fn clear_all_clips(app: tauri::AppHandle) -> Result<u64, String> {
         .map(|result| result.rows_affected())
 }
 
+#[tauri::command]
+async fn write_clipboard(content: String, app: tauri::AppHandle) -> Result<(), String> {
+    let state = app.state::<Mutex<AppState>>();
+    let mut state = state.lock().unwrap();
+    state.internal_copy = hash_str(&content);
+    println!("Updated internal copy to:{}, hash={}", &content, state.internal_copy);
+
+    app.clipboard()
+        .write_text(&content)
+        .map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -48,10 +71,8 @@ pub fn run() {
             tauri_plugin_sql::Builder::new().build()
         )
         .setup(|app| {
+            app.manage(Mutex::new(AppState::default()));
             tauri::async_runtime::block_on(db::init_db(&app.handle().clone()))?;
-            Ok(())
-        })
-        .setup(|app| {
             listener::start_clipboard_listener(&app.handle().clone());
             Ok(())
         })
@@ -61,7 +82,8 @@ pub fn run() {
             save_clip,
             delete_clip,
             clear_all_clips,
-            update_clip
+            update_clip,
+            write_clipboard
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -36,19 +36,8 @@ const useClips = () => {
         console.log("New clip saved:", newClip);
 
         const prevClips = clipsRef.current;
-        const idx = idMapRef.current.get(newClip.id);
-        
-        if (typeof idx !== "number") {
-          // new clip
-          const nextClips = [newClip, ...prevClips];
-          applyNextClips(nextClips);
-        } else {
-          // update clip date
-          const nextClips = [...prevClips];
-          nextClips.splice(idx, 1);
-          nextClips.unshift(newClip);
-          applyNextClips(nextClips);
-        }
+        const nextClips = [newClip, ...prevClips];
+        applyNextClips(nextClips);
       });
 
       const unlistenUpdate = listen<ClipUpdatedPayload>("clipboard://update", (event) => {
@@ -60,8 +49,7 @@ const useClips = () => {
 
         const prevClips = clipsRef.current;
         const nextClips = [...prevClips];
-        nextClips.splice(idx, 1);
-        nextClips.unshift(updatedClip);
+        nextClips[idx].content = updatedClip.content;
         applyNextClips(nextClips);
       });
 

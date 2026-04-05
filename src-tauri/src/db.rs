@@ -49,7 +49,7 @@ pub async fn init_db<R: Runtime>(handle: &AppHandle<R>) -> Result<(), String> {
         CREATE TABLE IF NOT EXISTS clips (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             content     TEXT NOT NULL,
-            hash        TEXT UNIQUE NOT NULL,
+            hash        TEXT NOT NULL,
             edit        TEXT DEFAULT (datetime('now', 'localtime'))
         )
     ")
@@ -84,7 +84,6 @@ pub async fn save_clip<R: Runtime>(
     let hash = hash_str(content);
     let saved = sqlx::query_as::<_, ClipRow>("
         INSERT INTO clips (content, hash) VALUES (?, ?) 
-        ON CONFLICT(hash) DO UPDATE SET content = excluded.content, edit = datetime('now', 'localtime')
         RETURNING id, content, edit
     ")
     .bind(content)
@@ -131,7 +130,7 @@ pub async fn update_clip<R: Runtime>(
 
     let new_hash = hash_str(content);
     let updated = sqlx::query_as::<_, ClipRow>("
-        UPDATE clips SET content = ?, hash = ?, edit = datetime('now', 'localtime') WHERE id = ? 
+        UPDATE clips SET content = ?, hash = ? WHERE id = ? 
         RETURNING id, content, edit
     ")
     .bind(content)
