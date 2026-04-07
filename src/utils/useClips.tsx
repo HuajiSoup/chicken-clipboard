@@ -8,19 +8,41 @@ const buildIdMap = (items: Clip[]) => {
   return new Map<number, number>(items.map((clip, index) => [clip.id, index]));
 };
 
-const useClips = () => {
+const useClips = (query: string) => {
   const [clips, setClips] = useState<Clip[]>([]);
+  const [clipsFiltered, setClipsFiltered] = useState<Clip[]>([]);
+
   const clipsRef = useRef<Clip[]>([]);
+  const queryRef = useRef<string>(query);
   const idMapRef = useRef<Map<number, number>>(new Map());
 
+  const searchClips = () => {
+    console.log("Searching clips with query:", queryRef.current);
+    if (queryRef.current.trim().length === 0) return;
+
+    invoke("search_clips", { searchTerm: queryRef.current })
+      .then((fetchedClips) => {
+        console.log("Fetched filtered clips:", fetchedClips);
+        setClipsFiltered(fetchedClips as Clip[]);
+      })
+      .catch((error) => {
+        console.log("Error fetching filtered clips:", error);
+      });
+  }
+
   const applyNextClips = (nextClips: Clip[]) => {
+    // do least operations to clips
     clipsRef.current = nextClips;
     idMapRef.current = buildIdMap(nextClips);
     setClips(nextClips);
+
+    // and just search again is ok (length < 30)
+    searchClips();
   };
 
   useEffect(() => {
-    const fetchClips = async () => {
+    // it only runs once, afterwards all operations are be done to `clips`
+    const fetchInitClips = () => {
       invoke("get_all_clips")
         .then((fetchedClips) => {
           applyNextClips(fetchedClips as Clip[]);
@@ -72,13 +94,18 @@ const useClips = () => {
       }
     }
 
-    fetchClips();
+    fetchInitClips();
     const unlisten = startListen();
 
     return unlisten;
   }, []);
 
-  return [clips, idMapRef.current] as const;
+  useEffect(() => {
+    queryRef.current = query;
+    searchClips();
+  }, [query]);
+
+  return [clips, clipsFiltered, idMapRef.current] as const;
 }
 
 export default useClips;

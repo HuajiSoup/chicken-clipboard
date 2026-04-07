@@ -1,16 +1,20 @@
 import { List } from "react-window";
 import useClips from "../../utils/useClips";
 import ClipBox from "../ClipBox";
-import { memo, useContext } from "react";
+import { memo, useContext, useState } from "react";
 import { EditorContext } from "../../App";
 
 import "./index.scss";
 import toast from "react-hot-toast";
 import { invoke } from "@tauri-apps/api/core";
+import { debounce } from "../../utils/timer";
 
 const ClipList: React.FC = memo(() => {
-  const [clips, idMap] = useClips();
+  const [query, setQuery] = useState<string>("");
+  const [clips, clipsFiltered, idMap] = useClips(query);
   const setEditState = useContext(EditorContext);
+
+  const clipsToShow = query.trim().length === 0 ? clips : clipsFiltered;
 
   const handleClickClip = async (e: React.MouseEvent<HTMLDivElement>) => {
     const clickedCard = (e.target as HTMLElement).closest(".clipbox") as HTMLElement | null;
@@ -39,15 +43,28 @@ const ClipList: React.FC = memo(() => {
     }
   }
 
+  const handleQueryChange = debounce((value: string) => {
+    setQuery(value);
+  }, 500);
+
   return (<>
     <div className="cliplist-wrapper">
       {/* <Tester /> */}
+      <div className="search-bar">
+        <input
+          id="search-bar" 
+          type="text" 
+          placeholder="Search..."
+          onChange={(e) => handleQueryChange(e.target.value)}
+          defaultValue=""
+        />
+      </div>
       <List 
         className="cliplist"
         onClick={handleClickClip}
         rowComponent={ClipBox}
-        rowProps={{ clips }}
-        rowCount={clips.length}
+        rowProps={{ clips: clipsToShow }}
+        rowCount={clipsToShow.length}
         rowHeight={65}
       />
     </div>

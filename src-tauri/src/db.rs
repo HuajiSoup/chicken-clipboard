@@ -2,6 +2,8 @@ use sqlx::{sqlite::SqliteQueryResult, Pool, Sqlite};
 use tauri::{AppHandle, Emitter, Manager, Runtime};
 use tauri_plugin_sql::{DbInstances, DbPool};
 
+pub const DB_URL: &str = "sqlite:clips.db";
+
 #[derive(Debug, Clone, serde::Serialize, sqlx::FromRow)]
 pub struct ClipRow {
     pub id: u64,
@@ -28,8 +30,6 @@ pub struct PayloadClipUpdated {
     edit: String,
 }
 
-pub const DB_URL: &str = "sqlite:E:/HuajiSoup/huajiLAB/messy/db/clips.db";
-
 async fn sqlite_pool<R: Runtime>(handle: &AppHandle<R>) -> Result<Pool<Sqlite>, String> {
     let instances = handle.state::<DbInstances>();
     let lock = instances.0.read().await;
@@ -45,17 +45,41 @@ async fn sqlite_pool<R: Runtime>(handle: &AppHandle<R>) -> Result<Pool<Sqlite>, 
 pub async fn init_db<R: Runtime>(handle: &AppHandle<R>) -> Result<(), String> {
     let db_pool = sqlite_pool(handle).await?;
 
-    sqlx::query("
-        CREATE TABLE IF NOT EXISTS clips (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            content     TEXT NOT NULL,
-            hash        TEXT NOT NULL,
-            edit        TEXT DEFAULT (datetime('now', 'localtime'))
-        )
-    ")
-    .execute(&db_pool)
-    .await
-    .map_err(|e| e.to_string())?;
+    // create table and fts5 table for searching
+    let cmds = [
+        "CREATE TABLE IF NOT EXISTS clips (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            content TEXT NOT NULL,
+            hash TEXT NOT NULL,
+            edit TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
+        "CREATE VIRTUAL TABLE IF NOT EXISTS clips_fts USING fts5(
+            id, content, edit,
+            content='clips', content_rowid='id', tokenize='trigram'
+        )",
+        "CREATE TRIGGER IF NOT EXISTS clips_ai AFTER INSERT ON clips BEGIN
+            INSERT INTO clips_fts (rowid, id, content, edit)
+            VALUES (new.id, new.id, new.content, new.edit);
+        END",
+        "CREATE TRIGGER IF NOT EXISTS clips_ad AFTER DELETE ON clips BEGIN
+            INSERT INTO clips_fts (clips_fts, rowid, id, content, edit)
+            VALUES ('delete', old.id, old.id, old.content, old.edit);
+        END",
+        "CREATE TRIGGER IF NOT EXISTS clips_au AFTER UPDATE ON clips BEGIN
+            INSERT INTO clips_fts (clips_fts, rowid, id, content, edit)
+            VALUES ('delete', old.id, old.id, old.content, old.edit);
+
+            INSERT INTO clips_fts (rowid, id, content, edit)
+            VALUES (new.id, new.id, new.content, new.edit);
+        END",
+    ];
+    
+    for cmd in cmds {
+        sqlx::query(cmd)
+            .execute(&db_pool)
+            .await
+            .map_err(|e| e.to_string())?;
+    }
 
     Ok(())
 }
@@ -68,6 +92,30 @@ pub async fn get_all_clips<R: Runtime>(
     let rows = sqlx::query_as::<_, ClipRow>(
         "SELECT id, content, edit FROM clips ORDER BY edit DESC",
     )
+    .fetch_all(&db_pool)
+    .await
+    .map_err(|e| e.to_string())?;
+
+    Ok(rows)
+}
+
+pub async fn search_clips<R: Runtime>(
+    handle: &AppHandle<R>,
+    query: &str,
+) -> Result<Vec<ClipRow>, String> {
+    let db_pool = sqlite_pool(handle).await?;
+
+    let query = query.trim();
+    if query.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let fts_query = fts5_phrase_query(query);
+    let rows = sqlx::query_as::<_, ClipRow>(
+        "SELECT id, content, edit FROM clips_fts WHERE clips_fts MATCH ?
+        ORDER BY rank, edit DESC LIMIT 30",
+    )
+    .bind(fts_query)
     .fetch_all(&db_pool)
     .await
     .map_err(|e| e.to_string())?;
@@ -98,7 +146,6 @@ pub async fn save_clip<R: Runtime>(
         edit: saved.edit.clone(),
     };
     let _ = handle.emit("clipboard://save", payload);
-    println!("Emitted clipboard://save event for clip id: {}", saved.id);
 
     Ok(saved)
 }
@@ -168,4 +215,11 @@ pub fn hash_str(content: &str) -> String {
     hasher.update(content.as_bytes());
     let result = hasher.finalize();
     hex::encode(result)
+}
+
+fn fts5_phrase_query(input: &str) -> String {
+    // escape all " with "" and wrap each word in real quotes
+    let escaped = input.replace('"', "\"\"");
+    let terms: Vec<String> = escaped.split_whitespace().map(|s| format!("\"{}\"", s)).collect();
+    terms.join(" ")
 }

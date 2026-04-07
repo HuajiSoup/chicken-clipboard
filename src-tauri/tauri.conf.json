@@ -27,7 +27,7 @@
   "plugins": {
     "sql": {
       "preload": [
-        "sqlite:E:/HuajiSoup/huajiLAB/messy/db/clips.db"
+        "sqlite:clips.db"
       ]
     }
   },

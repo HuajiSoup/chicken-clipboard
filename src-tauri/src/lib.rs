@@ -1,5 +1,5 @@
 use std::sync::Mutex;
-use tauri::Manager;
+use tauri::{Manager, path::BaseDirectory};
 use tauri_plugin_clipboard_manager::ClipboardExt;
 
 mod db;
@@ -8,6 +8,7 @@ mod listener;
 
 #[derive(Default)]
 pub struct AppState {
+    pub app_dir: std::path::PathBuf,
     pub internal_copy: String,
 }
 
@@ -31,6 +32,11 @@ async fn init_db(app: tauri::AppHandle) -> Result<(), String> {
 #[tauri::command]
 async fn get_all_clips(app: tauri::AppHandle) -> Result<Vec<db::ClipRow>, String> {
     db::get_all_clips(&app).await
+}
+
+#[tauri::command]
+async fn search_clips(app: tauri::AppHandle, query: String) -> Result<Vec<db::ClipRow>, String> {
+    db::search_clips(&app, &query).await
 }
 
 #[tauri::command]
@@ -60,10 +66,7 @@ async fn write_clipboard(content: String, app: tauri::AppHandle) -> Result<(), S
     let state = app.state::<Mutex<AppState>>();
     let mut state = state.lock().map_err(|e| e.to_string())?;
     state.internal_copy = db::hash_str(&content);
-    println!(
-        "Updated internal copy, content={}, hash={}",
-        &content, state.internal_copy
-    );
+    println!("Internal copy, content: {}", content);
 
     app.clipboard()
         .write_text(&content)
@@ -81,8 +84,14 @@ pub fn run() {
                 .build(),
         )
         .setup(|app| {
-            app.manage(Mutex::new(AppState::default()));
+            // init state
+            app.manage(Mutex::new(AppState {
+                app_dir: app.path().resolve("", BaseDirectory::AppConfig).unwrap(),
+                internal_copy: String::new(),
+            }));
+            // init db
             tauri::async_runtime::block_on(db::init_db(&app.handle().clone()))?;
+            // start listeners
             settings::start_shortcut_listener(&app.handle().clone())?;
             listener::start_clipboard_listener(&app.handle().clone());
             Ok(())
@@ -91,6 +100,7 @@ pub fn run() {
             set_window_visibility,
             init_db,
             get_all_clips,
+            search_clips,
             save_clip,
             delete_clip,
             clear_all_clips,

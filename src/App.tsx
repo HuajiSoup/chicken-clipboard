@@ -26,10 +26,7 @@ function App() {
 
   return (<>
     <main className="container">
-      <EditorContext value={(state) => {
-        console.log("Edit state changed:", state);
-        setEditState(state);
-      }}>
+      <EditorContext value={setEditState}>
         <Header />
         <ClipList />
         <ClipEditor editState={editState} />

@@ -25,7 +25,7 @@ pub fn start_clipboard_listener<R: Runtime>(app_handle: &AppHandle<R>) {
                     match lock_result {
                         Ok(mut state) => {
                             // deny, if it's the same as last one,
-                            // or it's from internal app.
+                            // or it's just copied from internal app.
                             if cur_hash == last_hash {
                                 true
                             } else if cur_hash == state.internal_copy {
@@ -48,8 +48,8 @@ pub fn start_clipboard_listener<R: Runtime>(app_handle: &AppHandle<R>) {
                     .await
                     .map(|saved| {
                         println!(
-                            "saved clip from listener with id: {}, content: {}",
-                            saved.id, saved.content
+                            "Saved clip from listener, id: {}, content: {}, time: {}",
+                            saved.id, saved.content, saved.edit
                         );
                     })
                     .map_err(|e| e.to_string());

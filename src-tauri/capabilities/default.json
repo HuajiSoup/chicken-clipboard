@@ -13,9 +13,20 @@
     "global-shortcut:allow-register",
     "global-shortcut:allow-unregister",
     "opener:default",
-    "sql:default",
-    "sql:allow-execute",
-    "sql:allow-select",
+    {
+      "identifier": "sql:default",
+      "allow": [
+        { "path": "$APPDATA/**" },
+        { "path": "$APPCONFIG/**" }
+      ]
+    },
+    {
+      "identifier": "sql:allow-execute",
+      "allow": [
+        { "path": "$APPDATA/**" },
+        { "path": "$APPCONFIG/**" }
+      ]
+    },
     "clipboard-manager:allow-read-text",
     "clipboard-manager:allow-write-text",
     "log:default"

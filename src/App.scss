@@ -2,6 +2,11 @@
   margin: 0px;
 }
 
+::selection{
+  background-color: #e6b905;
+  color: white;
+}
+
 body {
   background: #fcf69d;
   overflow: hidden;
