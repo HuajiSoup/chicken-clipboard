@@ -31,6 +31,11 @@
       border-radius: 20px;
       border: 1px solid #ccc;
       font-size: 16px;
+
+      &:focus {
+        box-shadow: inset 0px 0px 5px #fbcf23aa;
+        outline: #fbcf23 2px solid;
+      }
     }
   }
 

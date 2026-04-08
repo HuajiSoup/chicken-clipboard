@@ -25,8 +25,31 @@ const Header: React.FC = () => {
         </span>
       </div>
 
-      <div className={`settings-panel ${openSettings ? 'open' : 'closed'}`}></div>
+      <div className={`settings-panel ${openSettings ? 'open' : 'closed'}`}>
+        <SettingsForm />
+      </div>
     </header>
+  </>);
+}
+
+const SettingsForm: React.FC = () => {
+  return (<>
+    <h2>Settings</h2>
+    <hr />
+
+    <div className="form-wrapper">
+      <form>
+        <div className="input-box">
+          <input type="checkbox" id="autostart" name="autostart" />
+          <label htmlFor="autostart">Start automatically</label>
+        </div>
+        <div className="input-box">
+          <input type="checkbox" id="show-tray" name="show-tray" />
+          <label htmlFor="show-tray">Show tray icon</label>
+        </div>
+        <p><i>More features coming soon...</i></p>
+      </form>
+    </div>
   </>);
 }
 

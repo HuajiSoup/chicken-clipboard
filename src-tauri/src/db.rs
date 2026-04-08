@@ -73,7 +73,7 @@ pub async fn init_db<R: Runtime>(handle: &AppHandle<R>) -> Result<(), String> {
             VALUES (new.id, new.id, new.content, new.edit);
         END",
     ];
-    
+
     for cmd in cmds {
         sqlx::query(cmd)
             .execute(&db_pool)
@@ -84,17 +84,14 @@ pub async fn init_db<R: Runtime>(handle: &AppHandle<R>) -> Result<(), String> {
     Ok(())
 }
 
-pub async fn get_all_clips<R: Runtime>(
-    handle: &AppHandle<R>,
-) -> Result<Vec<ClipRow>, String> {
+pub async fn get_all_clips<R: Runtime>(handle: &AppHandle<R>) -> Result<Vec<ClipRow>, String> {
     let db_pool = sqlite_pool(handle).await?;
 
-    let rows = sqlx::query_as::<_, ClipRow>(
-        "SELECT id, content, edit FROM clips ORDER BY edit DESC",
-    )
-    .fetch_all(&db_pool)
-    .await
-    .map_err(|e| e.to_string())?;
+    let rows =
+        sqlx::query_as::<_, ClipRow>("SELECT id, content, edit FROM clips ORDER BY edit DESC")
+            .fetch_all(&db_pool)
+            .await
+            .map_err(|e| e.to_string())?;
 
     Ok(rows)
 }
@@ -130,10 +127,12 @@ pub async fn save_clip<R: Runtime>(
     let db_pool = sqlite_pool(handle).await?;
 
     let hash = hash_str(content);
-    let saved = sqlx::query_as::<_, ClipRow>("
+    let saved = sqlx::query_as::<_, ClipRow>(
+        "
         INSERT INTO clips (content, hash) VALUES (?, ?) 
         RETURNING id, content, edit
-    ")
+    ",
+    )
     .bind(content)
     .bind(hash)
     .fetch_one(&db_pool)
@@ -150,10 +149,7 @@ pub async fn save_clip<R: Runtime>(
     Ok(saved)
 }
 
-pub async fn delete_clip<R: Runtime>(
-    handle: &AppHandle<R>,
-    id: i64,
-) -> Result<i64, String> {
+pub async fn delete_clip<R: Runtime>(handle: &AppHandle<R>, id: i64) -> Result<i64, String> {
     let db_pool = sqlite_pool(handle).await?;
 
     sqlx::query("DELETE FROM clips WHERE id = ?")
@@ -176,10 +172,12 @@ pub async fn update_clip<R: Runtime>(
     let db_pool = sqlite_pool(handle).await?;
 
     let new_hash = hash_str(content);
-    let updated = sqlx::query_as::<_, ClipRow>("
+    let updated = sqlx::query_as::<_, ClipRow>(
+        "
         UPDATE clips SET content = ?, hash = ? WHERE id = ? 
         RETURNING id, content, edit
-    ")
+    ",
+    )
     .bind(content)
     .bind(new_hash)
     .bind(id)
@@ -188,7 +186,7 @@ pub async fn update_clip<R: Runtime>(
     .map_err(|e| e.to_string())?;
 
     let payload = PayloadClipUpdated {
-        id: id as u64, 
+        id: id as u64,
         content: content.to_string(),
         edit: updated.edit.clone(),
     };
@@ -220,6 +218,9 @@ pub fn hash_str(content: &str) -> String {
 fn fts5_phrase_query(input: &str) -> String {
     // escape all " with "" and wrap each word in real quotes
     let escaped = input.replace('"', "\"\"");
-    let terms: Vec<String> = escaped.split_whitespace().map(|s| format!("\"{}\"", s)).collect();
+    let terms: Vec<String> = escaped
+        .split_whitespace()
+        .map(|s| format!("\"{}\"", s))
+        .collect();
     terms.join(" ")
 }

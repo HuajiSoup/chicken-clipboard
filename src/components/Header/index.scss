@@ -39,6 +39,9 @@ header {
     height: calc(100% - 40px);
     padding: 10px;
     background: #fcfbd1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     border-radius: 0 0 10px 10px;
     transition: bottom 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
     z-index: +15;
@@ -49,6 +52,46 @@ header {
     }
     &.closed {
       bottom: 100vh;
+    }
+
+    h2 {
+      font-size: large;
+    }
+
+    .form-wrapper {
+      box-sizing: border-box;
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: #fbcf23 2px solid;
+      border-radius: 10px;
+
+      form {
+        font-size: medium;
+
+        .input-box {
+          margin: 8px 0;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+
+          input[type="checkbox"] {
+            // appearance: none;
+            outline: none;
+            width: 18px;
+            height: 18px;
+            margin-right: 10px;
+
+            &:checked {
+              accent-color: #fbcf23;
+            }
+
+            &:checked:hover {
+              accent-color: #fbcf23;
+            }
+          }
+        }
+      }
     }
   }
 }

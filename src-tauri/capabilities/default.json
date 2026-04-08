@@ -29,6 +29,8 @@
     },
     "clipboard-manager:allow-read-text",
     "clipboard-manager:allow-write-text",
-    "log:default"
+    "log:default",
+    "store:default",
+    "autostart:default"
   ]
 }

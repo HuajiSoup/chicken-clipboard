@@ -20,7 +20,7 @@ const useClips = (query: string) => {
     console.log("Searching clips with query:", queryRef.current);
     if (queryRef.current.trim().length === 0) return;
 
-    invoke("search_clips", { searchTerm: queryRef.current })
+    invoke("search_clips", { query: queryRef.current })
       .then((fetchedClips) => {
         console.log("Fetched filtered clips:", fetchedClips);
         setClipsFiltered(fetchedClips as Clip[]);

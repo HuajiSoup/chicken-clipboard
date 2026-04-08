@@ -14,7 +14,8 @@ const ClipList: React.FC = memo(() => {
   const [clips, clipsFiltered, idMap] = useClips(query);
   const setEditState = useContext(EditorContext);
 
-  const clipsToShow = query.trim().length === 0 ? clips : clipsFiltered;
+  const isSearching = query.trim().length !== 0;
+  const clipsToShow = isSearching ? clipsFiltered : clips;
 
   const handleClickClip = async (e: React.MouseEvent<HTMLDivElement>) => {
     const clickedCard = (e.target as HTMLElement).closest(".clipbox") as HTMLElement | null;
@@ -54,7 +55,9 @@ const ClipList: React.FC = memo(() => {
         <input
           id="search-bar" 
           type="text" 
-          placeholder="Search..."
+          autoComplete="off"
+          spellCheck={false}
+          placeholder={`Search in ${clips.length} clips...`}
           onChange={(e) => handleQueryChange(e.target.value)}
           defaultValue=""
         />

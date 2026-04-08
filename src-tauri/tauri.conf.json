@@ -17,6 +17,7 @@
         "height": 360,
         "visible": false,
         "decorations": false,
+        "resizable": false,
         "label": "main"
       }
     ],

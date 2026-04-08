@@ -56,7 +56,7 @@ const ClipEditor: React.FC<ClipEditorProps> = ({ editState }) => {
         <X size={25} strokeWidth={1.5} />
       </div>
 
-      <p>#{id}</p>
+      <h2>View & Edit</h2>
 
       <textarea name="content" ref={textareaRef} placeholder="Clip content here...">{content}</textarea>
 

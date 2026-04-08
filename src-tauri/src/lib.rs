@@ -1,10 +1,10 @@
 use std::sync::Mutex;
-use tauri::{Manager, path::BaseDirectory};
+use tauri::{path::BaseDirectory, Manager};
 use tauri_plugin_clipboard_manager::ClipboardExt;
 
 mod db;
-mod settings;
 mod listener;
+mod settings;
 
 #[derive(Default)]
 pub struct AppState {
@@ -76,8 +76,10 @@ async fn write_clipboard(content: String, app: tauri::AppHandle) -> Result<(), S
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_sql::Builder::new().build())
+        .plugin(tauri_plugin_autostart::Builder::new().app_name("Chicken Clipboard").build())
         .plugin(
             tauri_plugin_log::Builder::new()
                 .level(tauri_plugin_log::log::LevelFilter::Info)
@@ -92,6 +94,7 @@ pub fn run() {
             // init db
             tauri::async_runtime::block_on(db::init_db(&app.handle().clone()))?;
             // start listeners
+            settings::read_settings(&app.handle().clone())?;
             settings::start_shortcut_listener(&app.handle().clone())?;
             listener::start_clipboard_listener(&app.handle().clone());
             Ok(())
