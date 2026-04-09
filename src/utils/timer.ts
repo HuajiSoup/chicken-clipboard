@@ -1,5 +1,11 @@
+/**
+ * Creates a debounced version of a function
+ * @param callback a function to debounce
+ * @param wait the delay in milliseconds
+ * @returns a debounced version of the function
+ */
 export function debounce<F extends (...args: any[]) => void>(
-    func: F,
+    callback: F,
     wait: number
 ) {
     let timeoutId: number | null = null;
@@ -8,22 +14,29 @@ export function debounce<F extends (...args: any[]) => void>(
         if (timeoutId) {
             clearTimeout(timeoutId);
         }
-        timeoutId = window.setTimeout(func, wait, ...args);
+        timeoutId = window.setTimeout(callback, wait, ...args);
     }
 }
 
+/**
+ * Creates a throttled version of a function.
+ * Note that the first call will be executed immediately,
+ * and the last call will be executed after the wait time.
+ * @param callback a function to throttle
+ * @param wait the delay in milliseconds
+ * @returns a throttled version of the function
+ */
 export function throttle<F extends (...args: any[]) => void>(
-    func: F,
+    callback: F,
     wait: number
 ) {
-    let timeoutId: number | null = null;
+    let lastCallTime: number | null = null;
 
     return (...args: Parameters<F>) => {
-        if (timeoutId) return;
-
-        timeoutId = window.setTimeout(() => {
-            func(...args);
-            timeoutId = null;
-        }, wait);
-    }
+        const now = Date.now();
+        if (!lastCallTime || now - lastCallTime >= wait) {
+            callback(...args);
+            lastCallTime = now;
+        }
+    };
 }

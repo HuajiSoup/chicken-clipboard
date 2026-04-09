@@ -4,18 +4,45 @@ use tauri_plugin_store::StoreExt;
 
 const SETTINGS_FILE: &str = "settings.json";
 
-pub fn read_settings<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct SettingsOptions {
+    pub autostart: bool,
+    pub show_tray: bool,
+}
+
+pub fn write_settings<R: Runtime>(options: SettingsOptions, app: &AppHandle<R>) -> Result<(), String> {
     let store = app.store(SETTINGS_FILE).map_err(|e| e.to_string())?;
 
-    let set_autostart = match store.get("autostart") {
+    store.set("autostart", serde_json::json!({ "value": options.autostart }));
+    store.set("show_tray", serde_json::json!({ "value": options.show_tray }));
+
+    Ok(())
+}
+
+pub fn read_settings<R: Runtime>(app: &AppHandle<R>) -> Result<SettingsOptions, String> {
+    let store = app.store(SETTINGS_FILE).map_err(|e| e.to_string())?;
+
+    let autostart = match store.get("autostart") {
         Some(value) => value["value"].as_bool().unwrap_or(false),
         None => false,
     };
+    let show_tray = match store.get("show_tray") {
+        Some(value) => value["value"].as_bool().unwrap_or(true),
+        None => true,
+    };
+
+    Ok(SettingsOptions { autostart, show_tray })
+}
+
+pub fn apply_settings<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
+    let options = read_settings(app)?;
+
+    // autostart
     let autostart_manager = app.autolaunch();
     let autostart_enbaled = autostart_manager.is_enabled().unwrap_or(false);
 
-    if autostart_enbaled != set_autostart {
-        if set_autostart {
+    if autostart_enbaled != options.autostart {
+        if options.autostart {
             if cfg!(dev) {
                 println!("autostart enabled!");
             } else {
@@ -30,11 +57,8 @@ pub fn read_settings<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
         }
     }
 
-    let set_show_tray = match store.get("show_tray") {
-        Some(value) => value["value"].as_bool().unwrap_or(true),
-        None => true,
-    };
-    if set_show_tray {
+    // tray
+    if options.show_tray {
         enable_tray(app)?;
     }
 
@@ -43,7 +67,7 @@ pub fn read_settings<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
 
 pub fn enable_tray<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
     use tauri::{
-        menu::{Menu, MenuItem},
+        menu::{MenuItem, MenuBuilder},
         tray::TrayIconBuilder,
     };
 
@@ -54,7 +78,13 @@ pub fn enable_tray<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
     let quit_i =
         MenuItem::with_id(app, "quit", "Quit", true, None::<&str>).map_err(|e| e.to_string())?;
 
-    let tray_menu = Menu::with_items(app, &[&show_i, &hide_i, &quit_i]).map_err(|e| e.to_string())?;
+    let tray_menu = MenuBuilder::new(app)
+        .item(&show_i)
+        .item(&hide_i)
+        .separator()
+        .item(&quit_i)
+        .build()
+        .map_err(|e| e.to_string())?;
 
     let icon = app
         .default_window_icon()
@@ -78,7 +108,12 @@ pub fn enable_tray<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
                 }
             },
             "quit" => {
-                println!("Exiting app...");
+                println!("Closing window and exiting app...");
+                if let Some(window) = app.get_webview_window("main") {
+                    if let Err(e) = window.close() {
+                        println!("Failed to close window, but will still exit: {}", e);
+                    }
+                }
                 app.exit(0);
             },
             _ => {

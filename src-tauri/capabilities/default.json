@@ -31,6 +31,7 @@
     "clipboard-manager:allow-write-text",
     "log:default",
     "store:default",
+    "process:default",
     "autostart:default"
   ]
 }

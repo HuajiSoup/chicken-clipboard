@@ -25,6 +25,27 @@ async fn set_window_visibility(visible: bool, app: tauri::AppHandle) -> Result<(
 }
 
 #[tauri::command]
+async fn restart_app(app: tauri::AppHandle) -> Result<(), String> {
+    println!("Closing window and restarting app...");
+    if let Some(window) = app.get_webview_window("main") {
+        if let Err(e) = window.close() {
+            println!("Failed to close window, but will still restart: {}", e);
+        }
+    }
+    app.restart()
+}
+
+#[tauri::command]
+async fn read_settings(app: tauri::AppHandle) -> Result<settings::SettingsOptions, String> {
+    settings::read_settings(&app)
+}
+
+#[tauri::command]
+async fn write_settings(options: settings::SettingsOptions, app: tauri::AppHandle) -> Result<(), String> {
+    settings::write_settings(options, &app)
+}
+
+#[tauri::command]
 async fn init_db(app: tauri::AppHandle) -> Result<(), String> {
     db::init_db(&app).await
 }
@@ -99,13 +120,18 @@ pub fn run() {
             // init db
             tauri::async_runtime::block_on(db::init_db(&app.handle().clone()))?;
             // start listeners
-            settings::read_settings(&app.handle().clone())?;
+            settings::apply_settings(&app.handle().clone())?;
             settings::start_shortcut_listener(&app.handle().clone())?;
             listener::start_clipboard_listener(&app.handle().clone());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             set_window_visibility,
+            restart_app,
+
+            read_settings,
+            write_settings,
+            
             init_db,
             get_all_clips,
             search_clips,

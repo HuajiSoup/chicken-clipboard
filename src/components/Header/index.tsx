@@ -1,8 +1,16 @@
 import { Settings, X } from "lucide-react";
+import { invoke } from "@tauri-apps/api/core";
+import { useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
+import { throttle } from "../../utils/timer";
 
 import "./index.scss";
-import { invoke } from "@tauri-apps/api/core";
-import { useState } from "react";
+
+// rust name style
+type SettingsOptions = {
+  autostart: boolean;
+  show_tray: boolean;
+};
 
 const Header: React.FC = () => {
   const [openSettings, setOpenSettings] = useState<boolean>(false);
@@ -32,13 +40,54 @@ const Header: React.FC = () => {
   </>);
 }
 
+const applySettingsForm = (options: SettingsOptions, form: HTMLFormElement) => {
+  const elem = (elemName: string) => form.elements.namedItem(elemName) as HTMLInputElement;
+
+  elem("autostart").checked = options.autostart;
+  elem("show-tray").checked = options.show_tray;
+
+}
+
 const SettingsForm: React.FC = () => {
+  const formRef = useRef<HTMLFormElement | null>(null);
+
+  useEffect(() => {
+    invoke("read_settings")
+      .then((options: unknown) => {
+        const form = formRef.current;
+        if (form) applySettingsForm(options as SettingsOptions, form);
+      });
+  }, []);
+
+  const writeSettings = throttle((e: React.SubmitEvent<HTMLFormElement>) => {
+    const formData = new FormData(e.currentTarget);
+    const options: SettingsOptions = {
+      autostart: formData.get("autostart") === "on",
+      show_tray: formData.get("show-tray") === "on",
+    };
+
+    invoke("write_settings", { options })
+      .then(() => {
+        toast.success("Settings saved, restart this app!", { duration: 1500 });
+      });
+  }, 2000);
+
+  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    writeSettings(e);
+  };
+
+  const handleRestart = async () => {
+    await invoke("restart_app");
+  }
+
   return (<>
     <h2>Settings</h2>
+    <small>*will take effect after <b>restart</b>.</small>
     <hr />
 
     <div className="form-wrapper">
-      <form>
+      <form onSubmit={handleSubmit} ref={formRef}>
         <div className="input-box">
           <input type="checkbox" id="autostart" name="autostart" />
           <label htmlFor="autostart">Start automatically</label>
@@ -47,7 +96,16 @@ const SettingsForm: React.FC = () => {
           <input type="checkbox" id="show-tray" name="show-tray" />
           <label htmlFor="show-tray">Show tray icon</label>
         </div>
+
         <p><i>More features coming soon...</i></p>
+        <div className="input-box button-group">
+          <button name="restart" type="button" onClick={handleRestart}>
+            Restart
+          </button>
+          <button name="submit" type="submit">
+            Save
+          </button>
+        </div>
       </form>
     </div>
   </>);

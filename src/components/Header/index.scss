@@ -54,9 +54,7 @@ header {
       bottom: 100vh;
     }
 
-    h2 {
-      font-size: large;
-    }
+    > h2 { font-size: large; }
 
     .form-wrapper {
       box-sizing: border-box;
@@ -70,7 +68,7 @@ header {
         font-size: medium;
 
         .input-box {
-          margin: 8px 0;
+          margin: 6px 0;
           display: flex;
           flex-direction: row;
           align-items: center;
@@ -88,6 +86,25 @@ header {
 
             &:checked:hover {
               accent-color: #fbcf23;
+            }
+          }
+        }
+
+        .input-box.button-group {
+          margin: 6px 0 0 0;
+          justify-content: flex-end;
+
+          button {
+            background-color: #fbcf23;
+            border: none;
+            border-radius: 5px;
+            padding: 6px 12px;
+            margin-left: 10px;
+            cursor: pointer;
+            color: #5e5200;
+
+            &:hover {
+              background-color: #e6b905;
             }
           }
         }
