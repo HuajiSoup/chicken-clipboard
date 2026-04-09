@@ -76,10 +76,15 @@ async fn write_clipboard(content: String, app: tauri::AppHandle) -> Result<(), S
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_sql::Builder::new().build())
-        .plugin(tauri_plugin_autostart::Builder::new().app_name("Chicken Clipboard").build())
+        .plugin(
+            tauri_plugin_autostart::Builder::new()
+                .app_name("Chicken Clipboard")
+                .build(),
+        )
         .plugin(
             tauri_plugin_log::Builder::new()
                 .level(tauri_plugin_log::log::LevelFilter::Info)
