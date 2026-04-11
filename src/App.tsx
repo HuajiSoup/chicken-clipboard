@@ -1,11 +1,11 @@
 import { createContext, useState } from "react";
-import Header from "./components/Header";
-import ClipList from "./components/ClipList";
+import { Toaster } from "react-hot-toast";
 import ClipEditor from "./components/ClipEditor";
+import ClipList from "./components/ClipList";
+import Header from "./components/Header";
 import Clip from "./models/clip";
 
 import "./App.scss";
-import { Toaster } from "react-hot-toast";
 
 type EditState = {
   editing: boolean;

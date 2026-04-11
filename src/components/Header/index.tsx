@@ -1,6 +1,6 @@
-import { Settings, X } from "lucide-react";
-import { invoke } from "@tauri-apps/api/core";
 import { useEffect, useRef, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import { Settings, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { throttle } from "../../utils/timer";
 

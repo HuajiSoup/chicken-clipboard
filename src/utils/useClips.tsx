@@ -1,7 +1,7 @@
-import { invoke } from "@tauri-apps/api/core";
-import Clip from "../models/clip";
 import { useEffect, useRef, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import Clip from "../models/clip";
 import { ClipDeletedPayload, ClipSavedPayload, ClipUpdatedPayload } from "../models/clipEvents";
 
 const buildIdMap = (items: Clip[]) => {

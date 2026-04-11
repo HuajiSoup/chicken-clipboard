@@ -1,10 +1,10 @@
 import { useContext, useEffect, useRef } from "react";
-import { EditorContext, EditState } from "../../App";
+import { invoke } from "@tauri-apps/api/core";
 import { Save, Trash2, X } from "lucide-react";
+import toast from "react-hot-toast";
+import { EditorContext, EditState } from "../../App";
 
 import "./index.scss";
-import { invoke } from "@tauri-apps/api/core";
-import toast from "react-hot-toast";
 
 type ClipEditorProps = {
   editState: EditState;

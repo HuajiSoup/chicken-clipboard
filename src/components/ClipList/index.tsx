@@ -1,13 +1,13 @@
+import { memo, useContext, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import toast from "react-hot-toast";
 import { List } from "react-window";
+import { EditorContext } from "../../App";
+import { debounce } from "../../utils/timer";
 import useClips from "../../utils/useClips";
 import ClipBox from "../ClipBox";
-import { memo, useContext, useState } from "react";
-import { EditorContext } from "../../App";
 
 import "./index.scss";
-import toast from "react-hot-toast";
-import { invoke } from "@tauri-apps/api/core";
-import { debounce } from "../../utils/timer";
 
 const ClipList: React.FC = memo(() => {
   const [query, setQuery] = useState<string>("");

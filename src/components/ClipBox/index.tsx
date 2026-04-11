@@ -1,6 +1,6 @@
+import { Edit } from "lucide-react";
 import { RowComponentProps } from "react-window";
 import Clip from "../../models/clip";
-import { Edit } from "lucide-react";
 
 import "./index.scss";
 
