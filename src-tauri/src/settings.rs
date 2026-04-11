@@ -6,6 +6,7 @@ const SETTINGS_FILE: &str = "settings.json";
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct SettingsOptions {
+    pub quick_delete: bool,
     pub autostart: bool,
     pub show_tray: bool,
 }
@@ -13,6 +14,7 @@ pub struct SettingsOptions {
 pub fn write_settings<R: Runtime>(options: SettingsOptions, app: &AppHandle<R>) -> Result<(), String> {
     let store = app.store(SETTINGS_FILE).map_err(|e| e.to_string())?;
 
+    store.set("quick_delete", serde_json::json!({ "value": options.quick_delete }));
     store.set("autostart", serde_json::json!({ "value": options.autostart }));
     store.set("show_tray", serde_json::json!({ "value": options.show_tray }));
 
@@ -22,6 +24,10 @@ pub fn write_settings<R: Runtime>(options: SettingsOptions, app: &AppHandle<R>) 
 pub fn read_settings<R: Runtime>(app: &AppHandle<R>) -> Result<SettingsOptions, String> {
     let store = app.store(SETTINGS_FILE).map_err(|e| e.to_string())?;
 
+    let quick_delete = match store.get("quick_delete") {
+        Some(value) => value["value"].as_bool().unwrap_or(true),
+        None => true,
+    };
     let autostart = match store.get("autostart") {
         Some(value) => value["value"].as_bool().unwrap_or(false),
         None => false,
@@ -31,7 +37,7 @@ pub fn read_settings<R: Runtime>(app: &AppHandle<R>) -> Result<SettingsOptions, 
         None => true,
     };
 
-    Ok(SettingsOptions { autostart, show_tray })
+    Ok(SettingsOptions { autostart, show_tray, quick_delete })
 }
 
 pub fn apply_settings<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
@@ -68,7 +74,7 @@ pub fn apply_settings<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
 pub fn enable_tray<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
     use tauri::{
         menu::{MenuItem, MenuBuilder},
-        tray::TrayIconBuilder,
+        tray::{TrayIconBuilder, TrayIconEvent, MouseButton, MouseButtonState},
     };
 
     let show_i =
@@ -95,6 +101,19 @@ pub fn enable_tray<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
         .icon(icon)
         .show_menu_on_left_click(false)
         .menu(&tray_menu)
+        .on_tray_icon_event(|tray, event| match event {
+            TrayIconEvent::Click {
+                button: MouseButton::Left,
+                button_state: MouseButtonState::Up,
+                ..
+            } => {
+                if let Some(window) = tray.app_handle().get_webview_window("main") {
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                }
+            },
+            _ => {}
+        })
         .on_menu_event(|app, event| match event.id.as_ref() {
             "show" => {
                 if let Some(window) = app.get_webview_window("main") {
