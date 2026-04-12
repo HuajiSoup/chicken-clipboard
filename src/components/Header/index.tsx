@@ -60,6 +60,10 @@ const SettingsForm: React.FC = () => {
     saveSettings(e);
   };
 
+  const handleQuit = async () => {
+    await invoke("quit_app");
+  }
+
   const handleRestart = async () => {
     await invoke("restart_app");
   }
@@ -91,11 +95,14 @@ const SettingsForm: React.FC = () => {
         </div>
 
         <div className="input-box button-group">
-          <button name="restart" type="button" onClick={handleRestart}>
-            Restart
-          </button>
           <button name="submit" type="submit">
             Save
+          </button>
+          <button name="quit" type="button" onClick={handleQuit}>
+            Quit
+          </button>
+          <button name="restart" type="button" onClick={handleRestart}>
+            Restart
           </button>
         </div>
       </form>

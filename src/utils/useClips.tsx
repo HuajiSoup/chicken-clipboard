@@ -25,16 +25,11 @@ const useClips = (query: string, config: useClipsConfig = {}) => {
   } = config;
 
   const searchClips = () => {
-    console.log("Searching clips with query:", queryRef.current);
     if (queryRef.current.trim().length === 0) return;
 
     invoke("search_clips", { query: queryRef.current })
       .then((fetchedClips) => {
-        console.log("Fetched filtered clips:", fetchedClips);
         setClipsFiltered(fetchedClips as Clip[]);
-      })
-      .catch((error) => {
-        console.log("Error fetching filtered clips:", error);
       });
   }
 
@@ -63,7 +58,6 @@ const useClips = (query: string, config: useClipsConfig = {}) => {
     const startListen = () => {
       const unlistenSave = listen<ClipSavedPayload>("clipboard://save", (event) => {
         const newClip = event.payload;
-        console.log("New clip saved:", newClip);
 
         const prevClips = clipsRef.current;
         const nextClips = [newClip, ...prevClips];
@@ -72,7 +66,6 @@ const useClips = (query: string, config: useClipsConfig = {}) => {
 
       const unlistenUpdate = listen<ClipUpdatedPayload>("clipboard://update", (event) => {
         const updatedClip = event.payload;
-        console.log("Clip updated:", updatedClip);
 
         const idx = idMapRef.current.get(updatedClip.id);
         if (typeof idx !== "number") return;
@@ -90,7 +83,6 @@ const useClips = (query: string, config: useClipsConfig = {}) => {
 
       const unlistenDelete = listen<ClipDeletedPayload>("clipboard://delete", (event) => {
         const deletedId = event.payload.id;
-        console.log("Clip deleted:", deletedId);
 
         const idx = idMapRef.current.get(deletedId);
         if (typeof idx !== "number") return;

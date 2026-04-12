@@ -31,7 +31,6 @@ const ClipList: React.FC = memo(() => {
     const idx = idMap.get(clipId);
     if (typeof idx !== "number") return;
 
-    console.log("Clicked clip:", clips[idx]);
     const clickedEdit = (e.target as HTMLElement).closest(".options .option") as HTMLElement | null;
     const rightClicked = (e.button === 2);
 

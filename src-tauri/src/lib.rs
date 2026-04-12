@@ -25,6 +25,18 @@ async fn set_window_visibility(visible: bool, app: tauri::AppHandle) -> Result<(
 }
 
 #[tauri::command]
+async fn quit_app(app: tauri::AppHandle) -> Result<(), String> {
+    println!("Closing window and exiting app...");
+    if let Some(window) = app.get_webview_window("main") {
+        if let Err(e) = window.close() {
+            println!("Failed to close window, but will still exit: {}", e);
+        }
+    }
+    app.exit(0);
+    Ok(())
+}
+
+#[tauri::command]
 async fn restart_app(app: tauri::AppHandle) -> Result<(), String> {
     println!("Closing window and restarting app...");
     if let Some(window) = app.get_webview_window("main") {
@@ -128,6 +140,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             set_window_visibility,
+            quit_app,
             restart_app,
 
             read_settings,

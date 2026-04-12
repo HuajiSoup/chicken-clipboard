@@ -52,8 +52,13 @@
     padding: 5px;
     border-radius: 8px;
     background-color: #fcfbdd;
-    font-size: large;
-    font-family: monospace;
+    word-break: break-all;
+    font-size: 0.9rem;
+    font-family: sans-serif;
+
+    scrollbar-width: thin;
+    scrollbar-color: orange transparent;
+    scrollbar-gutter: stable;
 
     &:focus {
       box-shadow: inset 0px 0px 5px #fbcf23aa;
