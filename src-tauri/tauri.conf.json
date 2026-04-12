@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "chicken-clipboard",
+        "title": "Chicken Clipboard",
         "width": 360,
         "height": 360,
         "visible": false,

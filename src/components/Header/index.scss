@@ -65,7 +65,7 @@ header {
       border-radius: 10px;
 
       form {
-        font-size: medium;
+        font-size: 0.9rem;
 
         .input-box {
           margin: 6px 0;
@@ -76,8 +76,8 @@ header {
           input[type="checkbox"] {
             // appearance: none;
             outline: none;
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             margin-right: 10px;
 
             &:checked {
@@ -107,6 +107,12 @@ header {
               background-color: #e6b905;
             }
           }
+        }
+
+        hr {
+          background-color: #fbcf23;
+          height: 1.5px;
+          border: none;
         }
       }
     }

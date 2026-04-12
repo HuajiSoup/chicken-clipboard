@@ -4,17 +4,25 @@ import { listen } from "@tauri-apps/api/event";
 import Clip from "../models/clip";
 import { ClipDeletedPayload, ClipSavedPayload, ClipUpdatedPayload } from "../models/clipEvents";
 
+type useClipsConfig = {
+  autoUpdateTime?: boolean; // whether to update clip time after editing
+};
+
 const buildIdMap = (items: Clip[]) => {
   return new Map<number, number>(items.map((clip, index) => [clip.id, index]));
 };
 
-const useClips = (query: string) => {
+const useClips = (query: string, config: useClipsConfig = {}) => {
   const [clips, setClips] = useState<Clip[]>([]);
   const [clipsFiltered, setClipsFiltered] = useState<Clip[]>([]);
 
   const clipsRef = useRef<Clip[]>([]);
   const queryRef = useRef<string>(query);
   const idMapRef = useRef<Map<number, number>>(new Map());
+
+  const {
+    autoUpdateTime = false,
+  } = config;
 
   const searchClips = () => {
     console.log("Searching clips with query:", queryRef.current);
@@ -71,7 +79,12 @@ const useClips = (query: string) => {
 
         const prevClips = clipsRef.current;
         const nextClips = [...prevClips];
-        nextClips[idx].content = updatedClip.content;
+        if (autoUpdateTime) {
+          nextClips.splice(idx, 1);
+          nextClips.unshift(updatedClip);
+        } else {
+          nextClips[idx].content = updatedClip.content;
+        }
         applyNextClips(nextClips);
       });
 

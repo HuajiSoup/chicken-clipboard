@@ -10,6 +10,10 @@
 body {
   background: #fcf69d;
   overflow: hidden;
+  
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
 }
 
 main.container {

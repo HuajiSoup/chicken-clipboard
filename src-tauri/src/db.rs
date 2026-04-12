@@ -51,7 +51,7 @@ pub async fn init_db<R: Runtime>(handle: &AppHandle<R>) -> Result<(), String> {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             content TEXT NOT NULL,
             hash TEXT NOT NULL,
-            edit TEXT NOT NULL DEFAULT (datetime('now'))
+            edit TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
         )",
         "CREATE VIRTUAL TABLE IF NOT EXISTS clips_fts USING fts5(
             id, content, edit,
@@ -128,10 +128,8 @@ pub async fn save_clip<R: Runtime>(
 
     let hash = hash_str(content);
     let saved = sqlx::query_as::<_, ClipRow>(
-        "
-        INSERT INTO clips (content, hash) VALUES (?, ?) 
-        RETURNING id, content, edit
-    ",
+        "INSERT INTO clips (content, hash) VALUES (?, ?) 
+        RETURNING id, content, edit",
     )
     .bind(content)
     .bind(hash)
@@ -167,23 +165,37 @@ pub async fn delete_clip<R: Runtime>(handle: &AppHandle<R>, id: i64) -> Result<i
 pub async fn update_clip<R: Runtime>(
     handle: &AppHandle<R>,
     id: i64,
+    update_time: bool,
     content: &str,
 ) -> Result<i64, String> {
     let db_pool = sqlite_pool(handle).await?;
 
     let new_hash = hash_str(content);
-    let updated = sqlx::query_as::<_, ClipRow>(
-        "
-        UPDATE clips SET content = ?, hash = ? WHERE id = ? 
-        RETURNING id, content, edit
-    ",
-    )
-    .bind(content)
-    .bind(new_hash)
-    .bind(id)
-    .fetch_one(&db_pool)
-    .await
-    .map_err(|e| e.to_string())?;
+    let updated = {
+        if update_time {
+            sqlx::query_as::<_, ClipRow>(
+                "UPDATE clips SET content = ?, hash = ?, edit = datetime('now', 'localtime') WHERE id = ? 
+                RETURNING id, content, edit",
+            )
+            .bind(content)
+            .bind(new_hash)
+            .bind(id)
+            .fetch_one(&db_pool)
+            .await
+            .map_err(|e| e.to_string())?
+        } else {
+            sqlx::query_as::<_, ClipRow>(
+                "UPDATE clips SET content = ?, hash = ? WHERE id = ? 
+                RETURNING id, content, edit",
+            )
+            .bind(content)
+            .bind(new_hash)
+            .bind(id)
+            .fetch_one(&db_pool)
+            .await
+            .map_err(|e| e.to_string())?
+        }
+    };
 
     let payload = PayloadClipUpdated {
         id: id as u64,

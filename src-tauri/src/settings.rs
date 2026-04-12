@@ -6,6 +6,7 @@ const SETTINGS_FILE: &str = "settings.json";
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct SettingsOptions {
+    pub update_time: bool,
     pub quick_delete: bool,
     pub autostart: bool,
     pub show_tray: bool,
@@ -14,6 +15,7 @@ pub struct SettingsOptions {
 pub fn write_settings<R: Runtime>(options: SettingsOptions, app: &AppHandle<R>) -> Result<(), String> {
     let store = app.store(SETTINGS_FILE).map_err(|e| e.to_string())?;
 
+    store.set("update_time", serde_json::json!({ "value": options.update_time }));
     store.set("quick_delete", serde_json::json!({ "value": options.quick_delete }));
     store.set("autostart", serde_json::json!({ "value": options.autostart }));
     store.set("show_tray", serde_json::json!({ "value": options.show_tray }));
@@ -24,6 +26,10 @@ pub fn write_settings<R: Runtime>(options: SettingsOptions, app: &AppHandle<R>) 
 pub fn read_settings<R: Runtime>(app: &AppHandle<R>) -> Result<SettingsOptions, String> {
     let store = app.store(SETTINGS_FILE).map_err(|e| e.to_string())?;
 
+    let update_time = match store.get("update_time") {
+        Some(value) => value["value"].as_bool().unwrap_or(false),
+        None => false,
+    };
     let quick_delete = match store.get("quick_delete") {
         Some(value) => value["value"].as_bool().unwrap_or(true),
         None => true,
@@ -37,7 +43,7 @@ pub fn read_settings<R: Runtime>(app: &AppHandle<R>) -> Result<SettingsOptions, 
         None => true,
     };
 
-    Ok(SettingsOptions { autostart, show_tray, quick_delete })
+    Ok(SettingsOptions { update_time, autostart, show_tray, quick_delete })
 }
 
 pub fn apply_settings<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {

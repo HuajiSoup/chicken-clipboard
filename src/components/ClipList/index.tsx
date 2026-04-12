@@ -11,10 +11,12 @@ import "./index.scss";
 
 const ClipList: React.FC = memo(() => {
   const settings = useContext(SettingsContext);
+  const setEditState = useContext(EditorContext);
 
   const [query, setQuery] = useState<string>("");
-  const [clips, clipsFiltered, idMap] = useClips(query);
-  const setEditState = useContext(EditorContext);
+  const [clips, clipsFiltered, idMap] = useClips(query, { 
+    autoUpdateTime: settings.update_time 
+  });
 
   const isSearching = query.trim().length !== 0;
   const clipsToShow = isSearching ? clipsFiltered : clips;
@@ -31,7 +33,9 @@ const ClipList: React.FC = memo(() => {
 
     console.log("Clicked clip:", clips[idx]);
     const clickedEdit = (e.target as HTMLElement).closest(".options .option") as HTMLElement | null;
-    if (clickedEdit) {
+    const rightClicked = (e.button === 2);
+
+    if (clickedEdit || rightClicked) {
       if (settings.quick_delete && e.ctrlKey) {
         // quick delete
         invoke("delete_clip", { id: clipId })

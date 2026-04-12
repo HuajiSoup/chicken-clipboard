@@ -71,8 +71,8 @@ async fn delete_clip(id: i64, app: tauri::AppHandle) -> Result<i64, String> {
 }
 
 #[tauri::command]
-async fn update_clip(id: i64, content: String, app: tauri::AppHandle) -> Result<i64, String> {
-    db::update_clip(&app, id, &content).await
+async fn update_clip(id: i64, content: String, update_time: bool, app: tauri::AppHandle) -> Result<i64, String> {
+    db::update_clip(&app, id, update_time, &content).await
 }
 
 #[tauri::command]

@@ -1,17 +1,18 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Settings, X } from "lucide-react";
+import { ChevronUp, Settings, X } from "lucide-react";
 import toast from "react-hot-toast";
-import { SettingsContext, SettingsOptions } from "../../App";
+import { SettingsContext } from "../../App";
+import { applySettingsForm, readSettingsForm } from "../../utils/settings";
 import { throttle } from "../../utils/timer";
 
 import "./index.scss";
 
 const Header: React.FC = () => {
-  const [openSettings, setOpenSettings] = useState<boolean>(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
 
   const handleSettings = () => {
-    setOpenSettings((prev) => !prev);
+    setIsSettingsOpen((prev) => !prev);
   };
   const handleClose = () => {
     invoke("set_window_visibility", { visible: false });
@@ -20,27 +21,19 @@ const Header: React.FC = () => {
   return (<>
     <header className="header">
       <div className="title-bar" data-tauri-drag-region>
-        <span className="settings-btn" none-drag-region onClick={handleSettings}>
-          <Settings size={25} strokeWidth={1.5} />
+        <span className="settings-btn" none-drag-region="true" onClick={handleSettings}>
+          {isSettingsOpen ? <ChevronUp size={25} strokeWidth={1.5} /> : <Settings size={25} strokeWidth={1.5} />}
         </span>
-        <span className="close-btn" none-drag-region onClick={handleClose}>
+        <span className="close-btn" none-drag-region="true" onClick={handleClose}>
           <X size={25} strokeWidth={1.5} />
         </span>
       </div>
 
-      <div className={`settings-panel ${openSettings ? 'open' : 'closed'}`}>
+      <div className={`settings-panel ${isSettingsOpen ? 'open' : 'closed'}`}>
         <SettingsForm />
       </div>
     </header>
   </>);
-}
-
-const applySettingsForm = (options: SettingsOptions, form: HTMLFormElement) => {
-  const elem = (elemName: string) => form.elements.namedItem(elemName) as HTMLInputElement;
-
-  elem("quick-delete").checked = options.quick_delete;
-  elem("autostart").checked = options.autostart;
-  elem("show-tray").checked = options.show_tray;
 }
 
 const SettingsForm: React.FC = () => {
@@ -54,11 +47,7 @@ const SettingsForm: React.FC = () => {
 
   const saveSettings = throttle((e: React.SubmitEvent<HTMLFormElement>) => {
     const formData = new FormData(e.currentTarget);
-    const options: SettingsOptions = {
-      quick_delete: formData.get("quick-delete") === "on",
-      autostart: formData.get("autostart") === "on",
-      show_tray: formData.get("show-tray") === "on",
-    };
+    const options = readSettingsForm(formData);
 
     invoke("write_settings", { options })
       .then(() => {
@@ -83,19 +72,24 @@ const SettingsForm: React.FC = () => {
     <div className="form-wrapper">
       <form onSubmit={handleSubmit} ref={formRef}>
         <div className="input-box">
+          <input type="checkbox" id="update-time" name="update-time" />
+          <label htmlFor="update-time">Show item time as last edited</label>
+        </div>
+        <div className="input-box">
           <input type="checkbox" id="quick-delete" name="quick-delete" />
           <label htmlFor="quick-delete">Enable quick delete (Ctrl + Click)</label>
         </div>
+
+        <hr />
         <div className="input-box">
           <input type="checkbox" id="autostart" name="autostart" />
-          <label htmlFor="autostart">Start automatically</label>
+          <label htmlFor="autostart">Start automatically (Recommended)</label>
         </div>
         <div className="input-box">
           <input type="checkbox" id="show-tray" name="show-tray" />
           <label htmlFor="show-tray">Show tray icon</label>
         </div>
 
-        <p><i>More features coming soon...</i></p>
         <div className="input-box button-group">
           <button name="restart" type="button" onClick={handleRestart}>
             Restart

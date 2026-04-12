@@ -5,25 +5,13 @@ import ClipEditor from "./components/ClipEditor";
 import ClipList from "./components/ClipList";
 import Header from "./components/Header";
 import Clip from "./models/clip";
+import { defaultSettings, SettingsOptions } from "./utils/settings";
 
 import "./App.scss";
-
-// rust name style
-type SettingsOptions = {
-  quick_delete: boolean;
-  autostart: boolean;
-  show_tray: boolean;
-};
 
 type EditState = {
   editing: boolean;
   clip: Clip;
-};
-
-const defaultSettings: SettingsOptions = {
-  quick_delete: true,
-  autostart: false,
-  show_tray: true,
 };
 
 const defaultEditState: EditState = {
