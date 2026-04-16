@@ -25,7 +25,10 @@ const useClips = (query: string, config: useClipsConfig = {}) => {
   } = config;
 
   const searchClips = () => {
-    if (queryRef.current.trim().length === 0) return;
+    if (queryRef.current.trim().length === 0) {
+      setClipsFiltered(clipsRef.current);
+      return;
+    }
 
     invoke("search_clips", { query: queryRef.current })
       .then((fetchedClips) => {

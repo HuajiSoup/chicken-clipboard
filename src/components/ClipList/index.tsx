@@ -6,8 +6,22 @@ import { EditorContext, SettingsContext } from "../../App";
 import { debounce } from "../../utils/timer";
 import useClips from "../../utils/useClips";
 import ClipBox from "../ClipBox";
+import { SearchIcon, SearchCheckIcon, SearchXIcon, type LucideIcon } from "lucide-react";
 
 import "./index.scss";
+
+enum SearchState {
+  Idle,
+  Searching,
+  NotFound,
+  Found,
+};
+const iconMap: Record<SearchState, LucideIcon> = {
+  [SearchState.Idle]: SearchIcon,
+  [SearchState.Searching]: SearchIcon,
+  [SearchState.NotFound]: SearchXIcon,
+  [SearchState.Found]: SearchCheckIcon,
+};
 
 const ClipList: React.FC = memo(() => {
   const settings = useContext(SettingsContext);
@@ -20,6 +34,11 @@ const ClipList: React.FC = memo(() => {
 
   const isSearching = query.trim().length !== 0;
   const clipsToShow = isSearching ? clipsFiltered : clips;
+  const searchState = 
+    !isSearching ? SearchState.Idle :
+    clipsFiltered.length === 0 ? SearchState.NotFound :
+    clipsFiltered.length !== 0 ? SearchState.Found :
+    SearchState.Searching;
 
   const handleClickClip = async (e: React.MouseEvent<HTMLDivElement>) => {
     const clickedCard = (e.target as HTMLElement).closest(".clipbox") as HTMLElement | null;
@@ -61,19 +80,24 @@ const ClipList: React.FC = memo(() => {
     setQuery(value);
   }, 500);
 
+  const SearchIconCur = iconMap[searchState];
+
   return (<>
     <div className="cliplist-wrapper">
       {/* <Tester /> */}
-      <div className="search-bar">
-        <input
-          id="search-bar" 
-          type="text" 
-          autoComplete="off"
-          spellCheck={false}
-          placeholder={`Search in ${clips.length} clips...`}
-          onChange={(e) => handleQueryChange(e.target.value)}
-          defaultValue=""
-        />
+      <div className="search-bar-wrapper">
+        <div className="search-bar">
+          <SearchIconCur className="search-icon" size={18} />
+          <input
+            id="search-bar" 
+            type="text" 
+            autoComplete="off"
+            spellCheck={false}
+            placeholder={`Search in ${clips.length} clips...`}
+            onChange={(e) => handleQueryChange(e.target.value)}
+            defaultValue=""
+          />
+        </div>
       </div>
       <List 
         className="cliplist"
